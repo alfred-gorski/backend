@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -31,26 +32,27 @@ func ConnectMongoDB(host, dbName string) error {
 	return nil
 }
 
-func CreateNode(node *Node) error {
-	coll := DB.Collection("nodes")
-	node.ID = ""
-
-	_, err := coll.InsertOne(context.TODO(), node)
+func UpdateNode(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	nodeID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return err
+		return c.SendStatus(400)
 	}
-	return nil
-
-}
-
-func FindNodeByWorkerID(worker_id string, result *Node) error {
-	col := DB.Collection("nodes")
-	query := bson.D{{Key: "worker_id", Value: worker_id}}
-
-	if err := col.FindOne(context.TODO(), query).Decode(result); err != nil {
-		return err
+	node := new(Node)
+	if err := c.BodyParser(node); err != nil {
+		return c.Status(400).SendString(err.Error())
 	}
-	return nil
+	query := bson.D{{Key: "_id", Value: nodeID}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "schema", Value: node.Schema}}}}
+
+	if err := DB.Collection("nodes").FindOneAndUpdate(c.Context(), query, update).Err(); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.SendStatus(404)
+		}
+		return c.SendStatus(500)
+	}
+	node.ID = idParam
+	return c.JSON(node)
 }
 
 func GetNodes(c *fiber.Ctx) error {
@@ -65,4 +67,26 @@ func GetNodes(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 	return c.JSON(nodes)
+}
+
+func FindNodeByWorkerID(worker_id string, result *Node) error {
+	col := DB.Collection("nodes")
+	query := bson.D{{Key: "worker_id", Value: worker_id}}
+
+	if err := col.FindOne(context.TODO(), query).Decode(result); err != nil {
+		return err
+	}
+	return nil
+}
+
+func createNode(node *Node) error {
+	coll := DB.Collection("nodes")
+	node.ID = ""
+
+	_, err := coll.InsertOne(context.TODO(), node)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }

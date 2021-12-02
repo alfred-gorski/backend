@@ -28,7 +28,7 @@ func ConnectMQTT(host string) error {
 		var node Node
 		if err := FindNodeByWorkerID(m.WorkerID, &node); err != nil {
 			if err == mongo.ErrNoDocuments {
-				CreateNode(&m.Content)
+				createNode(&m.Content)
 			} else {
 				log.Fatal(err)
 			}
