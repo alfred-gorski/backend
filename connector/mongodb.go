@@ -10,13 +10,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// MongoInstance contains the Mongo client and database objects
-type MongoInstance struct {
-	Client *mongo.Client
-	Db     *mongo.Database
-}
-
-var DB MongoInstance
+// DB contains the Mongo database objects
+var DB *mongo.Database
+var client *mongo.Client
 
 // ConnectMongoDB configures the MongoDB client and initializes the database connection.
 func ConnectMongoDB(host, dbName string) error {
@@ -26,22 +22,17 @@ func ConnectMongoDB(host, dbName string) error {
 	defer cancel()
 
 	err = client.Connect(ctx)
-	db := client.Database(dbName)
+	DB = client.Database(dbName)
 
 	if err != nil {
 		return err
-	}
-
-	DB = MongoInstance{
-		Client: client,
-		Db:     db,
 	}
 
 	return nil
 }
 
 func CreateNode(node *Node) error {
-	coll := DB.Db.Collection("nodes")
+	coll := DB.Collection("nodes")
 	node.ID = ""
 
 	_, err := coll.InsertOne(context.TODO(), node)
@@ -53,7 +44,7 @@ func CreateNode(node *Node) error {
 }
 
 func FindNodeByWorkerID(worker_id string, result *Node) error {
-	col := DB.Db.Collection("nodes")
+	col := DB.Collection("nodes")
 	query := bson.D{{Key: "worker_id", Value: worker_id}}
 
 	if err := col.FindOne(context.TODO(), query).Decode(result); err != nil {
@@ -64,12 +55,12 @@ func FindNodeByWorkerID(worker_id string, result *Node) error {
 
 func GetNodes(c *fiber.Ctx) error {
 	query := bson.D{{}}
-	cursor, err := DB.Db.Collection("nodes").Find(c.Context(), query)
+	cursor, err := DB.Collection("nodes").Find(c.Context(), query)
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
 
-	var nodes []Node = make([]Node, 0)
+	var nodes = make([]Node, 0)
 	if err := cursor.All(c.Context(), &nodes); err != nil {
 		return c.Status(500).SendString(err.Error())
 	}

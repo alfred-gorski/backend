@@ -1,8 +1,8 @@
 package main
 
 import (
-	"backend/app/routes"
 	"backend/connector"
+	"backend/routes"
 	"log"
 	"os"
 
