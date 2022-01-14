@@ -1,28 +1,29 @@
 package main
 
 import (
-	"backend/connector"
+	"backend/config"
 	"backend/routes"
 	"log"
-	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+
+	mongodb_conn "backend/connector/mongodb"
+	mqtt_conn "backend/connector/mqtt"
 )
 
 func main() {
 	app := fiber.New()
-	app.Use(cors.New())
-	app.Use(recover.New())
-	app.Use(logger.New())
+	// app.Use(cors.New())
+	// app.Use(recover.New())
+	// app.Use(logger.New())
+	var conf config.Config
+	config.LoadConfig(&conf)
 
-	if err := connector.ConnectMongoDB(os.Args[1], os.Args[2]); err != nil {
+	if err := mongodb_conn.ConnectMongoDB(conf.Mongo); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := connector.ConnectMQTT(os.Args[1]); err != nil {
+	if err := mqtt_conn.ConnectMQTT(conf.MQTT); err != nil {
 		log.Fatal(err)
 	}
 

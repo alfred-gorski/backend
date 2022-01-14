@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"backend/connector"
+	"backend/controller"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -9,6 +9,7 @@ import (
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api")
 	nodes := api.Group("/nodes")
-	nodes.Get("/", connector.GetNodes)
-	nodes.Put("/:id", connector.UpdateNode)
+	nodes.Get("/", controller.GetNodes)
+	nodes.Get("/:id", controller.GetNode)
+	nodes.Put("/:id", controller.UpdateNode)
 }
