@@ -12,7 +12,6 @@ import (
 
 // DB contains the Mongo database objects
 var DB *mongo.Database
-var client *mongo.Client
 
 // ConnectMongoDB configures the MongoDB client and initializes the database connection.
 func ConnectMongoDB(m config.MongoConfig) error {
